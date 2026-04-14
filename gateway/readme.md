@@ -2,43 +2,44 @@
 
 ## Overview
 
-The API Gateway serves as the single entry point for all client requests. It routes incoming requests to the appropriate backend microservice.
+The gateway is the only public backend entrypoint. It handles:
 
-## Responsibilities
-
-- **Request routing**: Forward requests to the correct service
-- **Load balancing**: Distribute traffic (if applicable)
-- **Authentication**: Validate tokens/credentials (optional)
-- **Rate limiting**: Protect services from overload (optional)
-- **CORS handling**: Allow frontend cross-origin requests
-- **Request/Response transformation**: Modify headers, paths as needed
+- CORS
+- Route proxying to internal services
+- Dashboard data aggregation for frontend
 
 ## Tech Stack
 
-| Component  | Choice             |
-|------------|--------------------|
-| Approach   | *(e.g., Nginx, Express, FastAPI, Kong, Traefik)* |
+| Component | Choice |
+|-----------|--------|
+| Runtime | Node.js |
+| Framework | Express |
+| Proxy | http-proxy-middleware |
 
-## Routing Table
+## Routes
 
-| External Path        | Target Service | Internal URL                   |
-|----------------------|----------------|--------------------------------|
-| `/api/service-a/*`   | Service A      | `http://service-a:5000/*`      |
-| `/api/service-b/*`   | Service B      | `http://service-b:5000/*`      |
+| External Route | Method | Behavior |
+|----------------|--------|----------|
+| `/` | GET | Gateway status and available routes |
+| `/health` | GET | Health check |
+| `/api/dashboard` | GET | Aggregate data from service-a and service-b |
+| `/api/service-a/*` | ALL | Proxy to `http://service-a:5000/*` |
+| `/api/service-b/*` | ALL | Proxy to `http://service-b:5000/*` |
 
-## Running
+## Run
 
 ```bash
-# From project root
 docker compose up gateway --build
 ```
 
-## Configuration
+## Environment Variables
 
-The gateway uses Docker Compose networking. Services are accessible by their
-service names defined in `docker-compose.yml` (e.g., `service-a`, `service-b`).
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `8000` | Gateway listen port |
+| `SERVICE_A_URL` | `http://service-a:5000` | Internal URL for Service A |
+| `SERVICE_B_URL` | `http://service-b:5000` | Internal URL for Service B |
 
 ## Notes
 
-- Use service names (not `localhost`) for upstream URLs inside Docker
-- The gateway exposes port 8080 to the host
+- Inside Docker, upstream calls use service DNS names (`service-a`, `service-b`), not localhost.

@@ -1,52 +1,38 @@
-# Service B
-
-> Rename this to match your actual service name (e.g., `product-service`, `payment-service`).
+# Service B - Loan Service
 
 ## Overview
 
-Describe the responsibility of this service:
-- What business domain does it cover?
-- What data does it own?
-- What operations does it expose?
+Service B manages loan records. During loan creation it calls Service A to reserve stock.
 
 ## Tech Stack
 
-| Component  | Choice             |
-|------------|--------------------|
-| Language   | *(e.g., Python, Node.js, Java, Go, C#)* |
-| Framework  | *(e.g., FastAPI, Express, Spring Boot)*  |
-| Database   | *(e.g., PostgreSQL, MongoDB, MySQL)*     |
+| Component | Choice |
+|-----------|--------|
+| Language | JavaScript (Node.js) |
+| Framework | Express |
+| Storage | In-memory array (assignment demo) |
 
 ## API Endpoints
 
-| Method | Endpoint      | Description          |
-|--------|---------------|----------------------|
-| GET    | `/health`     | Health check         |
-| ...    | ...           | ...                  |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check |
+| GET | `/loans` | List loan records |
+| POST | `/loans` | Create loan (reserves a book via Service A) |
 
-> Full API specification: [`docs/api-specs/service-b.yaml`](../../docs/api-specs/service-b.yaml)
+OpenAPI: [../../docs/api-specs/service-b.yaml](../../docs/api-specs/service-b.yaml)
 
-## Running Locally
+## Run
 
 ```bash
-# From project root
 docker compose up service-b --build
-```
-
-## Project Structure
-
-```
-service-b/
-├── Dockerfile
-├── readme.md
-└── src/           # Your source code goes here
 ```
 
 ## Environment Variables
 
-| Variable   | Description         | Default   |
-|------------|---------------------|-----------|
-| `DB_HOST`  | Database hostname   | localhost |
-| `DB_PORT`  | Database port       | 5432      |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `5000` | Service listen port |
+| `SERVICE_A_URL` | `http://service-a:5000` | Internal endpoint used for stock reservation |
 
 

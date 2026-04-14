@@ -4,10 +4,9 @@
 # ============================================
 openapi: 3.0.3
 info:
-  title: Service A API
+  title: Library Catalog Service API
   description: |
-    API specification for Service A.
-    Replace with your actual service name and description.
+    Service A manages book catalog data and stock reservation for loan requests.
   version: 1.0.0
 
 servers:
@@ -25,56 +24,134 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: ok
+                $ref: '#/components/schemas/HealthResponse'
 
-  # Add your endpoints below
-  # /items:
-  #   get:
-  #     summary: List all items
-  #     operationId: listItems
-  #     responses:
-  #       '200':
-  #         description: A list of items
-  #         content:
-  #           application/json:
-  #             schema:
-  #               type: array
-  #               items:
-  #                 $ref: '#/components/schemas/Item'
-  #   post:
-  #     summary: Create a new item
-  #     operationId: createItem
-  #     requestBody:
-  #       required: true
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: '#/components/schemas/ItemCreate'
-  #     responses:
-  #       '201':
-  #         description: Item created
+  /books:
+    get:
+      summary: Get all books
+      operationId: listBooks
+      responses:
+        '200':
+          description: Book list response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookListResponse'
+
+  /books/{id}:
+    get:
+      summary: Get one book by id
+      operationId: getBookById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Book details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /books/{id}/reserve:
+    post:
+      summary: Reserve one unit of a book
+      operationId: reserveBook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reservation succeeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReserveBookResponse'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Book is out of stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
 components:
-  schemas: {}
-    # Item:
-    #   type: object
-    #   properties:
-    #     id:
-    #       type: string
-    #       format: uuid
-    #     name:
-    #       type: string
-    #     createdAt:
-    #       type: string
-    #       format: date-time
-    # ItemCreate:
-    #   type: object
-    #   required:
-    #     - name
-    #   properties:
-    #     name:
-    #       type: string
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+      required:
+        - status
+
+    Book:
+      type: object
+      properties:
+        id:
+          type: string
+          example: b1
+        title:
+          type: string
+          example: Clean Architecture
+        author:
+          type: string
+          example: Robert C. Martin
+        stock:
+          type: integer
+          minimum: 0
+          example: 3
+      required:
+        - id
+        - title
+        - author
+        - stock
+
+    BookListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Book'
+      required:
+        - items
+
+    ReserveBookResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Book reserved
+        book:
+          $ref: '#/components/schemas/Book'
+      required:
+        - message
+        - book
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Book not found
+      required:
+        - message

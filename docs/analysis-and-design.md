@@ -1,165 +1,164 @@
-# Analysis and Design — Business Process Automation Solution
+# Phân Tích Và Thiết Kế - Tự Động Hóa Yêu Cầu Mượn Sách Thư Viện
 
-> **Goal**: Analyze a specific business process and design a service-oriented automation solution (SOA/Microservices).
-> Scope: 4–6 week assignment — focus on **one business process**, not an entire system.
+## Phần 1 - Chuẩn Bị Phân Tích
 
-**References:**
-1. *Service-Oriented Architecture: Analysis and Design for Services and Microservices* — Thomas Erl (2nd Edition)
-2. *Microservices Patterns: With Examples in Java* — Chris Richardson
-3. *Bài tập — Phát triển phần mềm hướng dịch vụ* — Hung Dang (available in Vietnamese)
+### 1.1 Định Nghĩa Quy Trình Nghiệp Vụ
 
----
+- Miền nghiệp vụ: Vận hành thư viện
+- Quy trình nghiệp vụ: Mượn sách và theo dõi yêu cầu mượn
+- Tác nhân: Sinh viên mượn sách, thủ thư
+- Phạm vi: Xem danh mục sách, giữ chỗ tồn kho, tạo phiếu mượn, theo dõi các khoản mượn đang hoạt động
 
-## Part 1 — Analysis Preparation
+Luồng quy trình:
 
-### 1.1 Business Process Definition
+```mermaid
+flowchart LR
+    A[Sinh viên mở dashboard] --> B[Xem danh mục sách]
+    B --> C[Gửi yêu cầu mượn]
+    C --> D[Dịch vụ Loan kiểm tra dữ liệu]
+    D --> E[Dịch vụ Catalog giữ chỗ tồn kho]
+    E --> F[Tạo bản ghi mượn]
+    F --> G[Thủ thư theo dõi danh sách mượn]
+```
 
-Describe or diagram the high-level Business Process to be automated.
+### 1.2 Các Hệ Thống Tự Động Hóa Hiện Có
 
-- **Domain**: *(fill in)*
-- **Business Process**: *(fill in)*
-- **Actors**: *(fill in)*
-- **Scope**: *(fill in)*
+Không có - quy trình hiện được mô phỏng phục vụ học tập và triển khai từ starter template này.
 
-**Process Diagram:**
+### 1.3 Yêu Cầu Phi Chức Năng
 
-*(Insert BPMN, flowchart, or image into `docs/asset/` and reference here)*
+| Yêu cầu | Mô tả |
+|---------|-------|
+| Hiệu năng | Mục tiêu thời gian phản hồi API dưới 300ms với xử lý in-memory |
+| Bảo mật | Giới hạn điểm vào công khai tại gateway; các service nội bộ chỉ truy cập qua mạng compose |
+| Khả năng mở rộng | Các service Node.js không lưu trạng thái, có thể scale ngang |
+| Tính sẵn sàng | Mỗi service cung cấp GET /health để kiểm tra sống |
 
-### 1.2 Existing Automation Systems
+## Phần 2 - Mô Hình Hóa REST/Microservices
 
-List existing systems, databases, or legacy logic related to this process.
+### 2.1 Phân Rã Quy Trình Nghiệp Vụ Và 2.2 Lọc Hành Động Không Phù Hợp
 
-| System Name | Type | Current Role | Interaction Method |
-|-------------|------|--------------|-------------------|
-|             |      |              |                   |
+| # | Hành động | Tác nhân | Mô tả | Phù hợp? |
+|---|-----------|----------|-------|----------|
+| 1 | Mở dashboard | Sinh viên/Thủ thư | Truy cập giao diện frontend | Có |
+| 2 | Lấy danh mục sách | Hệ thống | Gateway gọi Service A để lấy danh sách sách | Có |
+| 3 | Nhập thông tin người mượn | Sinh viên | Dữ liệu nhập thủ công bởi người dùng | Không |
+| 4 | Kiểm tra yêu cầu | Service B | Đảm bảo có bookId và borrower | Có |
+| 5 | Giữ chỗ tồn kho | Service A | Giảm tồn kho đi một đơn vị | Có |
+| 6 | Tạo bản ghi mượn | Service B | Lưu bản ghi khoản mượn (in-memory cho demo) | Có |
+| 7 | Rà soát danh sách | Thủ thư | Cần quyết định nghiệp vụ của con người | Không |
 
-> If none exist, state: *"None — the process is currently performed manually."*
+### 2.3 Ứng Viên Entity Service
 
-### 1.3 Non-Functional Requirements
+| Thực thể | Ứng viên service | Hành động dùng lại |
+|----------|------------------|--------------------|
+| Book | Catalog Service (Service A) | Liệt kê sách, lấy chi tiết sách, giữ chỗ tồn kho |
+| Loan | Loan Service (Service B) | Tạo khoản mượn, liệt kê khoản mượn |
 
-Non-functional requirements serve as input for identifying Utility Service and Microservice Candidates in step 2.7.
+### 2.4 Ứng Viên Task Service
 
-| Requirement    | Description |
-|----------------|-------------|
-| Performance    |             |
-| Security       |             |
-| Scalability    |             |
-| Availability   |             |
+| Hành động không bất biến | Ứng viên task service |
+|---------------------------|------------------------|
+| Điều phối truy cập frontend và tổng hợp dữ liệu | API Gateway |
 
----
+### 2.5 Xác Định Resource
 
-## Part 2 — REST/Microservices Modeling
+| Thực thể / Quy trình | URI resource |
+|----------------------|--------------|
+| Health service | /health |
+| Tập hợp sách | /books |
+| Một cuốn sách | /books/{id} |
+| Giữ chỗ sách | /books/{id}/reserve |
+| Tập hợp khoản mượn | /loans |
+| Tổng hợp dashboard | /api/dashboard |
 
-### 2.1 Decompose Business Process & 2.2 Filter Unsuitable Actions
+### 2.6 Ánh Xạ Năng Lực Với Resource Và Phương Thức
 
-Decompose the process from 1.1 into granular actions. Mark actions unsuitable for service encapsulation.
+| Ứng viên service | Năng lực | Resource | HTTP Method |
+|------------------|----------|----------|-------------|
+| Service A | Kiểm tra health | /health | GET |
+| Service A | Liệt kê sách | /books | GET |
+| Service A | Lấy chi tiết sách | /books/{id} | GET |
+| Service A | Giữ chỗ tồn kho | /books/{id}/reserve | POST |
+| Service B | Kiểm tra health | /health | GET |
+| Service B | Liệt kê khoản mượn | /loans | GET |
+| Service B | Tạo khoản mượn | /loans | POST |
+| Gateway | Tổng hợp dashboard | /api/dashboard | GET |
 
-| # | Action | Actor | Description | Suitable? |
-|---|--------|-------|-------------|-----------|
-|   |        |       |             | ✅ / ❌    |
+### 2.7 Ứng Viên Utility Service Và Microservice
 
-> Actions marked ❌: manual-only, require human judgment, or cannot be encapsulated as a service.
+| Ứng viên | Loại | Lý do |
+|----------|------|-------|
+| API Gateway | Utility | Tập trung routing, CORS và logic tổng hợp |
+| Catalog service | Microservice | Sở hữu thực thể sách và trạng thái tồn kho |
+| Loan service | Microservice | Sở hữu thực thể khoản mượn và workflow mượn |
 
-### 2.3 Entity Service Candidates
-
-Identify business entities and group reusable (agnostic) actions into Entity Service Candidates.
-
-| Entity | Service Candidate | Agnostic Actions |
-|--------|-------------------|------------------|
-|        |                   |                  |
-
-### 2.4 Task Service Candidate
-
-Group process-specific (non-agnostic) actions into a Task Service Candidate.
-
-| Non-agnostic Action | Task Service Candidate |
-|---------------------|------------------------|
-|                     |                        |
-
-### 2.5 Identify Resources
-
-Map entities/processes to REST URI Resources.
-
-| Entity / Process | Resource URI |
-|------------------|--------------|
-|                  |              |
-
-### 2.6 Associate Capabilities with Resources and Methods
-
-| Service Candidate | Capability | Resource | HTTP Method |
-|-------------------|------------|----------|-------------|
-|                   |            |          |             |
-
-### 2.7 Utility Service & Microservice Candidates
-
-Based on Non-Functional Requirements (1.3) and Processing Requirements, identify cross-cutting utility logic or logic requiring high autonomy/performance.
-
-| Candidate | Type (Utility / Microservice) | Justification |
-|-----------|-------------------------------|---------------|
-|           |                               |               |
-
-### 2.8 Service Composition Candidates
-
-Interaction diagram showing how Service Candidates collaborate to fulfill the business process.
+### 2.8 Ứng Viên Service Composition
 
 ```mermaid
 sequenceDiagram
     participant Client
-    participant TaskService
-    participant EntityServiceA
-    participant EntityServiceB
-    participant UtilityService
+    participant Gateway
+    participant LoanService
+    participant CatalogService
 
-    Client->>TaskService: (fill in)
-    TaskService->>EntityServiceA: (fill in)
-    EntityServiceA-->>TaskService: (fill in)
-    TaskService->>EntityServiceB: (fill in)
-    EntityServiceB-->>TaskService: (fill in)
-    TaskService-->>Client: (fill in)
+    Client->>Gateway: POST /api/service-b/loans
+    Gateway->>LoanService: POST /loans
+    LoanService->>CatalogService: POST /books/{id}/reserve
+    CatalogService-->>LoanService: Kết quả giữ chỗ
+    LoanService-->>Gateway: Tạo khoản mượn thành công
+    Gateway-->>Client: 201 Created
 ```
 
----
+## Phần 3 - Thiết Kế Hướng Dịch Vụ
 
-## Part 3 — Service-Oriented Design
+### 3.1 Thiết Kế Hợp Đồng Đồng Nhất
 
-### 3.1 Uniform Contract Design
+Đặc tả OpenAPI:
 
-Service Contract specification for each service. Full OpenAPI specs:
-- [`docs/api-specs/service-a.yaml`](api-specs/service-a.yaml)
-- [`docs/api-specs/service-b.yaml`](api-specs/service-b.yaml)
+- docs/api-specs/service-a.yaml
+- docs/api-specs/service-b.yaml
 
-**Service A:**
+Tóm tắt hợp đồng Service A:
 
-| Endpoint | Method | Media Type | Response Codes |
-|----------|--------|------------|----------------|
-|          |        |            |                |
+| Endpoint | Method | Media Type | Mã phản hồi |
+|----------|--------|------------|-------------|
+| /health | GET | application/json | 200 |
+| /books | GET | application/json | 200 |
+| /books/{id} | GET | application/json | 200, 404 |
+| /books/{id}/reserve | POST | application/json | 200, 404, 409 |
 
-**Service B:**
+Tóm tắt hợp đồng Service B:
 
-| Endpoint | Method | Media Type | Response Codes |
-|----------|--------|------------|----------------|
-|          |        |            |                |
+| Endpoint | Method | Media Type | Mã phản hồi |
+|----------|--------|------------|-------------|
+| /health | GET | application/json | 200 |
+| /loans | GET | application/json | 200 |
+| /loans | POST | application/json | 201, 400, 404, 409, 502, 503 |
 
-### 3.2 Service Logic Design
+### 3.2 Thiết Kế Logic Dịch Vụ
 
-Internal processing flow for each service.
-
-**Service A:**
+Logic Service A:
 
 ```mermaid
 flowchart TD
-    A[Receive Request] --> B{Validate?}
-    B -->|Valid| C[(Process / DB)]
-    B -->|Invalid| D[Return 4xx Error]
-    C --> E[Return Response]
+    A[Nhận request] --> B{Sách có tồn tại?}
+    B -->|Không| C[Trả 404]
+    B -->|Có| D{Tồn kho > 0?}
+    D -->|Không| E[Trả 409]
+    D -->|Có| F[Giảm tồn kho]
+    F --> G[Trả thành công]
 ```
 
-**Service B:**
+Logic Service B:
 
 ```mermaid
 flowchart TD
-    A[Receive Request] --> B{Validate?}
-    B -->|Valid| C[(Process / DB)]
-    B -->|Invalid| D[Return 4xx Error]
-    C --> E[Return Response]
+    A[Nhận POST /loans] --> B{Payload hợp lệ?}
+    B -->|Không| C[Trả 400]
+    B -->|Có| D[Gọi endpoint reserve của Service A]
+    D --> E{Giữ chỗ thành công?}
+    E -->|Không| F[Ánh xạ 404/409/502/503]
+    E -->|Có| G[Tạo bản ghi khoản mượn]
+    G --> H[Trả 201]
 ```

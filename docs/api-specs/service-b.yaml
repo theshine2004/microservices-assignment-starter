@@ -4,10 +4,9 @@
 # ============================================
 openapi: 3.0.3
 info:
-  title: Service B API
+  title: Library Loan Service API
   description: |
-    API specification for Service B.
-    Replace with your actual service name and description.
+    Service B manages loan requests and collaborates with Service A to reserve stock.
   version: 1.0.0
 
 servers:
@@ -25,14 +24,171 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: ok
+                $ref: '#/components/schemas/HealthResponse'
 
-  # Define your endpoints here following the pattern above
+  /loans:
+    get:
+      summary: Get all loan records
+      operationId: listLoans
+      responses:
+        '200':
+          description: Loan list response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoanListResponse'
+    post:
+      summary: Create a new loan request
+      operationId: createLoan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLoanRequest'
+      responses:
+        '201':
+          description: Loan created and book reserved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateLoanResponse'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Book out of stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Failed to reserve book from Service A
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service A unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceUnavailableResponse'
 
 components:
-  schemas: {}
-    # Define your data models here
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+      required:
+        - status
+
+    Loan:
+      type: object
+      properties:
+        id:
+          type: string
+          example: l1
+        bookId:
+          type: string
+          example: b1
+        borrower:
+          type: string
+          example: Nguyen Van A
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - bookId
+        - borrower
+        - createdAt
+
+    Book:
+      type: object
+      properties:
+        id:
+          type: string
+          example: b1
+        title:
+          type: string
+          example: Clean Architecture
+        author:
+          type: string
+          example: Robert C. Martin
+        stock:
+          type: integer
+          example: 2
+      required:
+        - id
+        - title
+        - author
+        - stock
+
+    LoanListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Loan'
+      required:
+        - items
+
+    CreateLoanRequest:
+      type: object
+      properties:
+        bookId:
+          type: string
+          example: b1
+        borrower:
+          type: string
+          example: Nguyen Van A
+      required:
+        - bookId
+        - borrower
+
+    CreateLoanResponse:
+      type: object
+      properties:
+        loan:
+          $ref: '#/components/schemas/Loan'
+        reservedBook:
+          $ref: '#/components/schemas/Book'
+      required:
+        - loan
+        - reservedBook
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Book not found
+      required:
+        - message
+
+    ServiceUnavailableResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Service A is unavailable
+        error:
+          type: string
+          example: fetch failed
+      required:
+        - message
+        - error

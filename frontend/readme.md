@@ -2,53 +2,42 @@
 
 ## Overview
 
-This is the frontend module of the microservices system. It provides the user interface and communicates with backend services through the API Gateway.
+The frontend is a static dashboard page served by Nginx. It fetches data from the API Gateway and displays:
+
+- Total books
+- Units in stock
+- Total loan requests
+- Detailed book and loan lists
 
 ## Tech Stack
 
-| Component        | Choice               |
-|------------------|----------------------|
-| Framework        | *(e.g., React, Vue, Angular, Svelte, plain HTML/JS)* |
-| Styling          | *(e.g., CSS, Tailwind, Bootstrap, Material UI)*       |
-| Package Manager  | *(e.g., npm, yarn, pnpm)*                             |
-| Build Tool       | *(e.g., Vite, Webpack, esbuild)*                      |
+| Component | Choice |
+|-----------|--------|
+| UI | Plain HTML, CSS, JavaScript |
+| Web server | Nginx (Docker) |
 
-## Getting Started
+## Run
 
 ```bash
 # From project root
 docker compose up frontend --build
-
-# Or run locally (adapt to your stack)
-cd src/
-# npm install && npm run dev
-# yarn && yarn dev
 ```
+
+Open: http://localhost:3000
 
 ## Project Structure
 
-```
+```text
 frontend/
 ├── Dockerfile
 ├── readme.md
-└── src/           # Your source code goes here
-```
-
-## Environment Variables
-
-| Variable       | Description                | Default                  |
-|----------------|----------------------------|--------------------------|
-| `API_BASE_URL` | URL of the API Gateway     | `http://localhost:8080`  |
-
-## Build for Production
-
-```bash
-# Example:
-# npm run build
-# yarn build
+└── src/
+	├── index.html
+	├── styles.css
+	└── app.js
 ```
 
 ## Notes
 
-- All API calls should go through the **API Gateway** (`gateway`), not directly to individual services.
-- Configure proxy or API base URL to point to the gateway.
+- The UI calls the gateway endpoint: `http://localhost:8080/api/dashboard`.
+- In this assignment setup, frontend does not call services directly.

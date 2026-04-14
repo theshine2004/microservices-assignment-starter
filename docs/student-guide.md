@@ -115,35 +115,64 @@ git push
 
 ---
 
-## 📝 Development Workflow
+## 📝 Quy Trình Phát Triển
 
-### Phase 1: Analysis & Design
+### Giai Đoạn 1: Phân Tích & Thiết Kế
 
-1. Read `GETTING_STARTED.md` in the repo to understand the project structure
-2. Choose **one** analysis approach:
-   - **Approach 1 — SOA (Erl)**: Complete `docs/analysis-and-design.md`
-   - **Approach 2 — Strategic DDD**: Complete `docs/analysis-and-design-ddd.md`
-3. Identify the services needed for your domain
+Áp dụng lộ trình đã hoàn thành sau cho dự án hiện tại (Hệ thống yêu cầu mượn sách thư viện):
 
-### Phase 2: Architecture & API
+- [x] Đọc `GETTING_STARTED.md` để xác nhận ràng buộc bài tập và các đầu ra bắt buộc
+- [x] Chọn một hướng phân tích: **Approach 1 - SOA (Erl)**
+- [x] Hoàn thiện `docs/analysis-and-design.md` gồm:
+   - Định nghĩa quy trình nghiệp vụ và tác nhân
+   - Phân rã hành động và xác định service candidate
+   - Ánh xạ resource/method và phương án service composition
+- [x] Xác định các service cụ thể cho miền nghiệp vụ:
+   - Service A: Catalog + giữ chỗ tồn kho
+   - Service B: Quản lý khoản mượn
+   - Gateway: định tuyến + tổng hợp
+   - Frontend: dashboard UI
 
-1. Select patterns and complete `docs/architecture.md`
-2. Design APIs in `docs/api-specs/`
+### Giai Đoạn 2: Kiến Trúc & API
 
-### Phase 3: Implementation
+- [x] Hoàn thiện `docs/architecture.md` với các pattern đã chọn và lý do
+- [x] Xác định rõ trách nhiệm service, ma trận giao tiếp và mô hình triển khai
+- [x] Triển khai và đồng bộ OpenAPI với mã nguồn:
+   - `docs/api-specs/service-a.yaml`
+   - `docs/api-specs/service-b.yaml`
+- [x] Duy trì giao tiếp liên service bằng Docker DNS name (không dùng localhost)
 
-1. Choose the tech stack for each service
-2. Update each Dockerfile
-3. Implement `GET /health` in every service (do this first!)
-4. Implement business logic and API endpoints
-5. Configure Gateway routing
-6. Build the Frontend
+### Giai Đoạn 3: Triển Khai
 
-### Phase 4: Finalization
+- [x] Chọn stack:
+   - Backend/Gateway: Node.js + Express
+   - Frontend: HTML/CSS/JS được phục vụ bởi Nginx
+- [x] Cập nhật Dockerfile cho frontend, gateway, service-a và service-b
+- [x] Triển khai `GET /health` cho tất cả service
+- [x] Triển khai endpoint nghiệp vụ:
+   - Service A: `GET /books`, `GET /books/:id`, `POST /books/:id/reserve`
+   - Service B: `GET /loans`, `POST /loans`
+- [x] Cấu hình route gateway:
+   - `GET /api/dashboard`
+   - Proxy `/api/service-a/*`
+   - Proxy `/api/service-b/*`
+- [x] Xây dựng frontend dashboard tại `frontend/src/`
 
-1. Verify `docker compose up --build` runs successfully
-2. Update `README.md` with your team information
-3. Update each service's `readme.md`
+### Giai Đoạn 4: Hoàn Thiện
+
+- [x] Kiểm tra vận hành end-to-end với `docker compose up --build`
+- [x] Kiểm tra các endpoint bắt buộc:
+   - Gateway root và health
+   - Service A health
+   - Service B health
+   - Frontend trên cổng 3000
+- [x] Cập nhật tài liệu dự án:
+   - `README.md`
+   - `services/service-a/readme.md`
+   - `services/service-b/readme.md`
+   - `gateway/readme.md`
+   - `frontend/readme.md`
+- [ ] Điền thông tin nhóm/thành viên cuối cùng trong `README.md` trước khi nộp
 
 ---
 
@@ -193,7 +222,7 @@ git push
 | 3 | Run `docker compose up --build` frequently | Don't wait until the end to test |
 | 4 | One service per team member | Split by service, not by layer |
 | 5 | Small commits, commit frequently | Easy to roll back, shows progress to instructor |
-| 6 | Use service names, not `localhost` | Use `http://service-a:5001` not `http://localhost:5001` |
+| 6 | Use service names, not `localhost` | Use `http://service-a:5000` not `http://localhost:5001` |
 | 7 | Never hardcode passwords in code | Use `.env` for all configuration |
 | 8 | Use AI tools to assist | See `.ai/vibe-coding-guide.md` in the repo |
 
@@ -206,7 +235,7 @@ git push
 | `docker: command not found` | Docker Desktop not installed | Install from https://docs.docker.com/get-docker/ |
 | `Cannot connect to Docker daemon` | Docker Desktop not running | Open Docker Desktop and wait for the 🐳 icon |
 | `port is already in use` | Port occupied by another app | Stop that app or change the port in `docker-compose.yml` |
-| Service A cannot call Service B | Using `localhost` instead of service name | Change to `http://service-b:5002` |
+| Service A cannot call Service B | Using `localhost` instead of service name | Change to `http://service-b:5000` |
 | `git push` rejected | Remote has unpulled changes | Run `git pull --rebase` then push again |
 
 ---

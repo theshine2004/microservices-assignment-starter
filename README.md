@@ -1,84 +1,81 @@
-# Project Name
+# Hệ Thống Yêu Cầu Mượn Sách Thư Viện
 
-[![Stars](https://img.shields.io/github/stars/hungdn1701/microservices-assignment-starter?style=social)](https://github.com/hungdn1701/microservices-assignment-starter/stargazers)
-[![Forks](https://img.shields.io/github/forks/hungdn1701/microservices-assignment-starter?style=social)](https://github.com/hungdn1701/microservices-assignment-starter/network/members)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+Đây là dự án bài tập microservices tự động hóa quy trình mượn sách đơn giản.
+Người dùng có thể xem danh mục sách và tạo yêu cầu mượn qua frontend và gateway.
 
-> Brief description of the business process being automated and the service-oriented solution.
+## Thành Viên Nhóm
 
-> **New to this repo?** See [`GETTING_STARTED.md`](GETTING_STARTED.md) for setup instructions and workflow guide.
+| Họ và tên | Mã sinh viên | Vai trò | Đóng góp |
+|-----------|--------------|---------|----------|
+| Lương Nhật Minh | B22DCVT340 | Lập trình viên full-stack | Phân tích, thiết kế kiến trúc, triển khai API, định tuyến gateway, xây dựng module frontend |
 
----
+## Quy Trình Nghiệp Vụ
 
-## Team Members
+- Miền nghiệp vụ: Vận hành thư viện
+- Tác nhân: Sinh viên mượn sách, thủ thư
+- Phạm vi: Xem danh mục sách, giữ chỗ tồn kho, tạo và xem danh sách yêu cầu mượn
 
-| Name | Student ID | Role | Contribution |
-|------|------------|------|-------------|
-|      |            |      |             |
+## Module Demo Đơn Giản
 
----
+Tên module: Quick Loan Request
 
-## Business Process
+- Mục tiêu: Tạo một yêu cầu mượn sách với luồng dễ hiểu nhất để trình bày
+- Luồng xử lý: Form frontend -> Gateway proxy -> Service B tạo loan -> Service A trừ tồn kho
+- Lý do chọn module: Phạm vi nhỏ, đường đi dữ liệu rõ ràng, dễ demo
 
-*(Summarize the business process being automated — domain, actors, scope)*
-
----
-
-## Architecture
+## Kiến Trúc
 
 ```mermaid
 graph LR
-    U[User] --> FE[Frontend :3000]
-    FE --> GW[API Gateway :8080]
-    GW --> SA[Service A :5001]
-    GW --> SB[Service B :5002]
-    SA --> DB1[(Database A)]
-    SB --> DB2[(Database B)]
+    U[Sinh viên/Thủ thư] --> FE[Frontend :3000]
+        FE --> GW[API Gateway :8080]
+    GW --> SA[Dịch vụ Catalog :5001]
+    GW --> SB[Dịch vụ Loan :5002]
+        SB --> SA
 ```
 
-| Component     | Responsibility | Tech Stack | Port |
-|---------------|----------------|------------|------|
-| **Frontend**  |                |            | 3000 |
-| **Gateway**   |                |            | 8080 |
-| **Service A** |                |            | 5001 |
-| **Service B** |                |            | 5002 |
+| Thành phần | Trách nhiệm | Công nghệ | Cổng |
+|------------|-------------|-----------|------|
+| Frontend | Giao diện dashboard cho sách và yêu cầu mượn | HTML, CSS, JavaScript, Nginx | 3000 |
+| Gateway | Điểm vào duy nhất, proxy và tổng hợp dữ liệu dashboard | Node.js, Express | 8080 |
+| Service A | Quản lý danh mục sách và giữ chỗ tồn kho | Node.js, Express | 5001 |
+| Service B | Quản lý yêu cầu mượn sách | Node.js, Express | 5002 |
 
-> Full documentation: [`docs/architecture.md`](docs/architecture.md) · [`docs/analysis-and-design.md`](docs/analysis-and-design.md)
-
----
+Tài liệu chi tiết: [docs/analysis-and-design.md](docs/analysis-and-design.md), [docs/architecture.md](docs/architecture.md)
 
 ## Getting Started
 
 ```bash
-# Clone and initialize
-git clone <your-repo-url>
-cd <project-folder>
-cp .env.example .env
-
-# Build and run
+# Project has already been initialized with scripts/init.sh
 docker compose up --build
 ```
 
-### Verify
+## Verify Quick Start
 
 ```bash
-curl http://localhost:8080/health   # Gateway
-curl http://localhost:5001/health   # Service A
-curl http://localhost:5002/health   # Service B
+curl http://localhost:8080
+curl http://localhost:8080/health
+curl http://localhost:5001/health
+curl http://localhost:5002/health
+curl http://localhost:3000
 ```
 
----
+Business endpoint checks:
+
+```bash
+curl http://localhost:8080/api/service-a/books
+curl -X POST http://localhost:8080/api/service-b/loans \
+    -H "Content-Type: application/json" \
+    -d '{"bookId":"b1","borrower":"Nguyen Van A"}'
+curl http://localhost:8080/api/dashboard
+```
 
 ## API Documentation
 
-- [Service A — OpenAPI Spec](docs/api-specs/service-a.yaml)
-- [Service B — OpenAPI Spec](docs/api-specs/service-b.yaml)
-
----
+- [Service A OpenAPI](docs/api-specs/service-a.yaml)
+- [Service B OpenAPI](docs/api-specs/service-b.yaml)
 
 ## License
 
-This project uses the [MIT License](LICENSE).
-
-> Template by [Hung Dang](https://github.com/hungdn1701) · [Template guide](GETTING_STARTED.md)
+This project is licensed under [MIT](LICENSE).
 

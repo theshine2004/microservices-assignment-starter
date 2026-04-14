@@ -1,8 +1,13 @@
-# Service B — Dockerfile
-# Replace with your actual setup.
-# See .ai/prompts/create-dockerfile.md for templates (Node.js, Python, Java, Go, .NET).
-#
-# Requirements: expose port 5000, implement GET /health endpoint.
+FROM node:20-alpine
 
-# TODO: Replace with your actual Dockerfile.
-FROM scratch
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --omit=dev
+
+COPY src ./src
+
+ENV PORT=5000
+EXPOSE 5000
+
+CMD ["npm", "start"]
